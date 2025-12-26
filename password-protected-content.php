@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Password Protected Content
  * Description:       A secure block that allows you to password-protect content with client-side encryption, working even on static sites.
- * Version:           0.1.0
+ * Version:           0.1.1
  * Requires at least: 6.1
  * Requires PHP:      7.4
  * Author:            WordPress Telex

@@ -8,12 +8,20 @@ $locked_message = isset($attributes['lockedMessage']) ? $attributes['lockedMessa
 $content = isset($attributes['content']) ? $attributes['content'] : '';
 
 // Encode content as UTF-8 safe base64
-$content_for_encryption = !empty($password) ? base64_encode(wp_kses_post($content)) : '';
+$content_for_encryption = '';
+if (!empty($password) && !empty($content)) {
+	// Ensure UTF-8 encoding
+	$utf8_content = mb_convert_encoding(wp_kses_post($content), 'UTF-8', 'UTF-8');
+	$content_for_encryption = base64_encode($utf8_content);
+}
+
+// Generate password hash
+$password_hash = !empty($password) ? hash('sha256', $password) : '';
 
 ?>
 <div <?php echo get_block_wrapper_attributes(); ?> 
 	data-content="<?php echo esc_attr($content_for_encryption); ?>" 
-	data-password-hash="<?php echo esc_attr(!empty($password) ? hash('sha256', $password) : ''); ?>">
+	data-password-hash="<?php echo esc_attr($password_hash); ?>">
 	<div class="password-protected-content__locked">
 		<div class="password-protected-content__icon">🔒</div>
 		<div class="password-protected-content__message">

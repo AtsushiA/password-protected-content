@@ -1,6 +1,6 @@
 {
     "name": "password-protected-content",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "Hide content behind a password with client-side encryption",
     "author": "telex block authoring tool",
     "license": "GPL-2.0-or-later",

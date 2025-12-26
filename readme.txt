@@ -4,7 +4,7 @@
 Contributors:      WordPress Telex
 Tags:              block, password, protection, security, private
 Tested up to:      6.8
-Stable tag:        0.1.0
+Stable tag:        0.1.1
 License:           GPLv2 or later
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -21,6 +21,9 @@ Password Protected Content is a powerful WordPress block that allows you to hide
 * Content is encrypted in the HTML source code
 * Secure password-based decryption
 * Clean, user-friendly interface
+* Enhanced UTF-8 encoding support for multilingual content
+* Robust error handling and validation
+* Improved initialization for better compatibility
 
 Perfect for membership sites, private content, exclusive materials, or any content you want to restrict access to without complex authentication systems.
 
@@ -58,6 +61,15 @@ Users will need to contact you to get the password. There is no password recover
 3. The unlocked content after password entry
 
 == Changelog ==
+
+= 0.1.1 =
+* Enhanced: Improved UTF-8 encoding handling with mb_convert_encoding for better multilingual support
+* Enhanced: Added base64 input validation and cleaning for more robust decryption
+* Enhanced: Better error handling with detailed console logging for debugging
+* Enhanced: Optimized initialization with document.readyState check for better compatibility
+* Enhanced: Added empty content validation to prevent rendering issues
+* Fixed: Error messages now display in Japanese for better user experience
+* Fixed: Button text properly restored after failed password attempts
 
 = 0.1.0 =
 * Initial release
