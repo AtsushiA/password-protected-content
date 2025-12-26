@@ -4,7 +4,7 @@
 Contributors:      WordPress Telex
 Tags:              block, password, protection, security, private
 Tested up to:      6.8
-Stable tag:        0.1.2
+Stable tag:        0.1.3
 License:           GPLv2 or later
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -26,6 +26,7 @@ Password Protected Content is a powerful WordPress block that allows you to hide
 * Beautiful gradient-styled link buttons
 * Enhanced UTF-8 encoding support for multilingual content
 * Robust error handling and validation
+* Link data is also encoded to prevent source code exposure
 
 Perfect for membership sites, private content, exclusive materials, or any content you want to restrict access to without complex authentication systems.
 
@@ -65,6 +66,10 @@ In the block settings sidebar, open the "Link Settings" panel. Enter your URL, c
 
 The link button uses a beautiful gradient design by default. You can further customize it using custom CSS by targeting the `.password-protected-content__link-button` class.
 
+= Is the link information visible in the page source? =
+
+No. As of version 0.1.3, link information (URL, text, and target) is encoded in base64 format and only decoded after the correct password is entered, preventing easy exposure in the HTML source code.
+
 == Screenshots ==
 
 1. The block in the editor showing password settings
@@ -72,6 +77,13 @@ The link button uses a beautiful gradient design by default. You can further cus
 3. The unlocked content after password entry
 
 == Changelog ==
+
+= 0.1.3 =
+* Security Enhancement: Link data (URL, text, target) is now encoded in base64 format
+* Security: Consolidated three separate data attributes (data-link-url, data-link-text, data-link-target) into a single encoded data-link-data attribute
+* Security: Link information is no longer easily visible in HTML source code
+* Improved: Link data is decoded only after successful password verification
+* Improved: Added error handling for link data decoding failures
 
 = 0.1.2 =
 * New Feature: Added link button functionality to protected content
@@ -107,3 +119,10 @@ This block uses client-side encryption, which means:
 - For highly sensitive content, consider server-side authentication methods
 
 The encryption uses AES-256 algorithm with PBKDF2 key derivation.
+
+Link Data Protection:
+- Link information (URL, button text, target) is base64 encoded (not encrypted)
+- Base64 encoding prevents casual viewing in HTML source but is not true encryption
+- A technically savvy user could decode the link data without the password
+- This provides obfuscation rather than cryptographic security
+- For sensitive URLs, consider additional server-side protection

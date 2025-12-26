@@ -51,9 +51,7 @@ function initPasswordProtection() {
 		const errorDiv = block.querySelector('.password-protected-content__error');
 		const contentBase64 = block.dataset.content;
 		const passwordHash = block.dataset.passwordHash;
-		const linkUrl = block.dataset.linkUrl;
-		const linkText = block.dataset.linkText;
-		const linkTarget = block.dataset.linkTarget;
+		const linkDataBase64 = block.dataset.linkData;
 		
 		if (!form || !contentBase64 || !passwordHash) {
 			console.warn('Password protected block missing required data:', block);
@@ -90,6 +88,23 @@ function initPasswordProtection() {
 				
 				if (!content) {
 					throw new Error('Empty content');
+				}
+				
+				// Decode link data if available
+				let linkUrl = '';
+				let linkText = '';
+				let linkTarget = '_self';
+				
+				if (linkDataBase64 && linkDataBase64.trim() !== '') {
+					try {
+						const linkDataJson = decodeBase64(linkDataBase64);
+						const linkData = JSON.parse(linkDataJson);
+						linkUrl = linkData.url || '';
+						linkText = linkData.text || '詳細を見る';
+						linkTarget = linkData.target || '_self';
+					} catch (linkError) {
+						console.warn('Failed to decode link data:', linkError);
+					}
 				}
 				
 				// Build unlocked content HTML

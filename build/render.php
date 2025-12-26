@@ -18,6 +18,18 @@ if (!empty($password) && !empty($content)) {
 	$content_for_encryption = base64_encode($utf8_content);
 }
 
+// Encode link data as base64
+$link_data_encrypted = '';
+if (!empty($link_url)) {
+	$link_data = array(
+		'url' => $link_url,
+		'text' => $link_text,
+		'target' => $link_target
+	);
+	$link_data_json = wp_json_encode($link_data);
+	$link_data_encrypted = base64_encode($link_data_json);
+}
+
 // Generate password hash
 $password_hash = !empty($password) ? hash('sha256', $password) : '';
 
@@ -25,9 +37,7 @@ $password_hash = !empty($password) ? hash('sha256', $password) : '';
 <div <?php echo get_block_wrapper_attributes(); ?> 
 	data-content="<?php echo esc_attr($content_for_encryption); ?>" 
 	data-password-hash="<?php echo esc_attr($password_hash); ?>"
-	data-link-url="<?php echo esc_attr($link_url); ?>"
-	data-link-text="<?php echo esc_attr($link_text); ?>"
-	data-link-target="<?php echo esc_attr($link_target); ?>">
+	data-link-data="<?php echo esc_attr($link_data_encrypted); ?>">
 	<div class="password-protected-content__locked">
 		<div class="password-protected-content__icon">🔒</div>
 		<div class="password-protected-content__message">
