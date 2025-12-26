@@ -138,6 +138,18 @@ add_action( 'init', 'telex_password_protected_content_block_init' );
 		"content": {
 			"type": "string",
 			"default": ""
+		},
+		"linkUrl": {
+			"type": "string",
+			"default": ""
+		},
+		"linkText": {
+			"type": "string",
+			"default": "詳細を見る"
+		},
+		"linkTarget": {
+			"type": "string",
+			"default": "_self"
 		}
 	},
 	"supports": {
@@ -216,7 +228,8 @@ import {
 import { 
 	PanelBody, 
 	TextControl,
-	Notice
+	Notice,
+	ToggleControl
 } from '@wordpress/components';
 
 import { useState, useEffect } from '@wordpress/element';
@@ -239,7 +252,7 @@ import './editor.scss';
  * @return {Element} Element to render.
  */
 export default function Edit( { attributes, setAttributes } ) {
-	const { password, lockedMessage, content } = attributes;
+	const { password, lockedMessage, content, linkUrl, linkText, linkTarget } = attributes;
 	const [ showPasswordWarning, setShowPasswordWarning ] = useState( false );
 
 	useEffect( () => {
@@ -272,6 +285,27 @@ export default function Edit( { attributes, setAttributes } ) {
 						help={ __( 'パスワード入力前に表示されるメッセージ', 'password-protected-content' ) }
 					/>
 				</PanelBody>
+				<PanelBody title={ __( 'リンク設定', 'password-protected-content' ) } initialOpen={ false }>
+					<TextControl
+						label={ __( 'リンクURL', 'password-protected-content' ) }
+						value={ linkUrl }
+						onChange={ ( value ) => setAttributes( { linkUrl: value } ) }
+						help={ __( 'コンテンツ内に表示するリンクのURL', 'password-protected-content' ) }
+						type="url"
+						placeholder="https://example.com"
+					/>
+					<TextControl
+						label={ __( 'ボタンテキスト', 'password-protected-content' ) }
+						value={ linkText }
+						onChange={ ( value ) => setAttributes( { linkText: value } ) }
+						help={ __( 'リンクボタンに表示するテキスト', 'password-protected-content' ) }
+					/>
+					<ToggleControl
+						label={ __( '新しいタブで開く', 'password-protected-content' ) }
+						checked={ linkTarget === '_blank' }
+						onChange={ ( value ) => setAttributes( { linkTarget: value ? '_blank' : '_self' } ) }
+					/>
+				</PanelBody>
 			</InspectorControls>
 
 			<div { ...blockProps }>
@@ -302,6 +336,18 @@ export default function Edit( { attributes, setAttributes } ) {
 					/>
 				</div>
 
+				{ linkUrl && (
+					<div className="password-protected-content-editor__link-preview">
+						<strong>{ __( 'リンクプレビュー:', 'password-protected-content' ) }</strong>
+						<div className="link-button-preview">
+							<span className="dashicon dashicons dashicons-admin-links"></span>
+							{ linkText || __( '詳細を見る', 'password-protected-content' ) }
+							{ linkTarget === '_blank' && <span className="dashicon dashicons dashicons-external"></span> }
+						</div>
+						<small>URL: { linkUrl }</small>
+					</div>
+				) }
+
 				{ password && (
 					<div className="password-protected-content-editor__info">
 						<p>
@@ -324,8 +370,7 @@ export default function Edit( { attributes, setAttributes } ) {
   </file>
   <file path="src/style.scss">
     <description>This file contains styles for the block in the front end.</description>
-    <content><![CDATA[
-/**
+    <content><![CDATA[/**
  * The following styles get applied both on the front of your site
  * and in the editor.
  */
@@ -419,6 +464,7 @@ export default function Edit( { attributes, setAttributes } ) {
 	
 	.password-protected-content__content {
 		line-height: 1.6;
+		margin-bottom: 2rem;
 		
 		p {
 			margin-bottom: 1rem;
@@ -427,6 +473,42 @@ export default function Edit( { attributes, setAttributes } ) {
 		img {
 			max-width: 100%;
 			height: auto;
+		}
+	}
+
+	.password-protected-content__link {
+		text-align: center;
+		margin-top: 2rem;
+
+		.password-protected-content__link-button {
+			display: inline-flex;
+			align-items: center;
+			gap: 0.5rem;
+			padding: 0.875rem 2rem;
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			color: white;
+			text-decoration: none;
+			border-radius: 6px;
+			font-size: 1rem;
+			font-weight: 600;
+			transition: all 0.3s ease;
+			box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+			&:hover {
+				transform: translateY(-2px);
+				box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+				background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+			}
+
+			&:active {
+				transform: translateY(0);
+			}
+
+			.dashicon {
+				width: 20px;
+				height: 20px;
+				font-size: 20px;
+			}
 		}
 	}
 }
@@ -445,8 +527,7 @@ export default function Edit( { attributes, setAttributes } ) {
   </file>
   <file path="src/editor.scss">
     <description>This file contains styles for the block in the editor.</description>
-    <content><![CDATA[
-/**
+    <content><![CDATA[/**
  * The following styles get applied inside the editor only.
  */
 
@@ -528,6 +609,45 @@ export default function Edit( { attributes, setAttributes } ) {
 		}
 	}
 
+	.password-protected-content-editor__link-preview {
+		background: white;
+		padding: 1.5rem;
+		border-radius: 4px;
+		border: 1px solid #ddd;
+		margin-bottom: 1rem;
+
+		strong {
+			display: block;
+			margin-bottom: 1rem;
+			color: #333;
+		}
+
+		.link-button-preview {
+			display: inline-flex;
+			align-items: center;
+			gap: 0.5rem;
+			padding: 0.875rem 2rem;
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			color: white;
+			border-radius: 6px;
+			font-weight: 600;
+			margin-bottom: 0.5rem;
+
+			.dashicon {
+				width: 20px;
+				height: 20px;
+				font-size: 20px;
+			}
+		}
+
+		small {
+			display: block;
+			color: #666;
+			margin-top: 0.5rem;
+			word-break: break-all;
+		}
+	}
+
 	.password-protected-content-editor__info {
 		background: #e8f5e9;
 		padding: 0.75rem 1rem;
@@ -602,6 +722,9 @@ function initPasswordProtection() {
 		const errorDiv = block.querySelector('.password-protected-content__error');
 		const contentBase64 = block.dataset.content;
 		const passwordHash = block.dataset.passwordHash;
+		const linkUrl = block.dataset.linkUrl;
+		const linkText = block.dataset.linkText;
+		const linkTarget = block.dataset.linkTarget;
 		
 		if (!form || !contentBase64 || !passwordHash) {
 			console.warn('Password protected block missing required data:', block);
@@ -640,7 +763,30 @@ function initPasswordProtection() {
 					throw new Error('Empty content');
 				}
 				
-				block.innerHTML = '<div class="password-protected-content__unlocked"><div class="password-protected-content__content">' + content + '</div></div>';
+				// Build unlocked content HTML
+				let unlockedHTML = '<div class="password-protected-content__unlocked">';
+				unlockedHTML += '<div class="password-protected-content__content">' + content + '</div>';
+				
+				// Add link button if URL is provided
+				if (linkUrl && linkUrl.trim() !== '') {
+					const safeUrl = linkUrl.replace(/"/g, '&quot;');
+					const safeTarget = linkTarget || '_self';
+					const safeText = linkText || '詳細を見る';
+					const rel = safeTarget === '_blank' ? ' rel="noopener noreferrer"' : '';
+					const externalIcon = safeTarget === '_blank' ? '<span class="dashicon dashicons dashicons-external"></span>' : '';
+					
+					unlockedHTML += '<div class="password-protected-content__link">';
+					unlockedHTML += '<a href="' + safeUrl + '" class="password-protected-content__link-button" target="' + safeTarget + '"' + rel + '>';
+					unlockedHTML += '<span class="dashicon dashicons dashicons-admin-links"></span>';
+					unlockedHTML += safeText;
+					unlockedHTML += externalIcon;
+					unlockedHTML += '</a>';
+					unlockedHTML += '</div>';
+				}
+				
+				unlockedHTML += '</div>';
+				
+				block.innerHTML = unlockedHTML;
 				block.classList.add('is-unlocked');
 				
 			} catch (error) {
@@ -680,6 +826,9 @@ if (document.readyState === 'loading') {
 $password = isset($attributes['password']) ? $attributes['password'] : '';
 $locked_message = isset($attributes['lockedMessage']) ? $attributes['lockedMessage'] : 'このコンテンツはパスワードで保護されています。';
 $content = isset($attributes['content']) ? $attributes['content'] : '';
+$link_url = isset($attributes['linkUrl']) ? $attributes['linkUrl'] : '';
+$link_text = isset($attributes['linkText']) ? $attributes['linkText'] : '詳細を見る';
+$link_target = isset($attributes['linkTarget']) ? $attributes['linkTarget'] : '_self';
 
 // Encode content as UTF-8 safe base64
 $content_for_encryption = '';
@@ -695,7 +844,10 @@ $password_hash = !empty($password) ? hash('sha256', $password) : '';
 ?>
 <div <?php echo get_block_wrapper_attributes(); ?> 
 	data-content="<?php echo esc_attr($content_for_encryption); ?>" 
-	data-password-hash="<?php echo esc_attr($password_hash); ?>">
+	data-password-hash="<?php echo esc_attr($password_hash); ?>"
+	data-link-url="<?php echo esc_attr($link_url); ?>"
+	data-link-text="<?php echo esc_attr($link_text); ?>"
+	data-link-target="<?php echo esc_attr($link_target); ?>">
 	<div class="password-protected-content__locked">
 		<div class="password-protected-content__icon">🔒</div>
 		<div class="password-protected-content__message">

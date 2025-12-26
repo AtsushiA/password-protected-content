@@ -6,6 +6,9 @@
 $password = isset($attributes['password']) ? $attributes['password'] : '';
 $locked_message = isset($attributes['lockedMessage']) ? $attributes['lockedMessage'] : 'このコンテンツはパスワードで保護されています。';
 $content = isset($attributes['content']) ? $attributes['content'] : '';
+$link_url = isset($attributes['linkUrl']) ? $attributes['linkUrl'] : '';
+$link_text = isset($attributes['linkText']) ? $attributes['linkText'] : '詳細を見る';
+$link_target = isset($attributes['linkTarget']) ? $attributes['linkTarget'] : '_self';
 
 // Encode content as UTF-8 safe base64
 $content_for_encryption = '';
@@ -21,7 +24,10 @@ $password_hash = !empty($password) ? hash('sha256', $password) : '';
 ?>
 <div <?php echo get_block_wrapper_attributes(); ?> 
 	data-content="<?php echo esc_attr($content_for_encryption); ?>" 
-	data-password-hash="<?php echo esc_attr($password_hash); ?>">
+	data-password-hash="<?php echo esc_attr($password_hash); ?>"
+	data-link-url="<?php echo esc_attr($link_url); ?>"
+	data-link-text="<?php echo esc_attr($link_text); ?>"
+	data-link-target="<?php echo esc_attr($link_target); ?>">
 	<div class="password-protected-content__locked">
 		<div class="password-protected-content__icon">🔒</div>
 		<div class="password-protected-content__message">

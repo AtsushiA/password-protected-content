@@ -21,7 +21,8 @@ import {
 import { 
 	PanelBody, 
 	TextControl,
-	Notice
+	Notice,
+	ToggleControl
 } from '@wordpress/components';
 
 import { useState, useEffect } from '@wordpress/element';
@@ -44,7 +45,7 @@ import './editor.scss';
  * @return {Element} Element to render.
  */
 export default function Edit( { attributes, setAttributes } ) {
-	const { password, lockedMessage, content } = attributes;
+	const { password, lockedMessage, content, linkUrl, linkText, linkTarget } = attributes;
 	const [ showPasswordWarning, setShowPasswordWarning ] = useState( false );
 
 	useEffect( () => {
@@ -77,6 +78,27 @@ export default function Edit( { attributes, setAttributes } ) {
 						help={ __( 'パスワード入力前に表示されるメッセージ', 'password-protected-content' ) }
 					/>
 				</PanelBody>
+				<PanelBody title={ __( 'リンク設定', 'password-protected-content' ) } initialOpen={ false }>
+					<TextControl
+						label={ __( 'リンクURL', 'password-protected-content' ) }
+						value={ linkUrl }
+						onChange={ ( value ) => setAttributes( { linkUrl: value } ) }
+						help={ __( 'コンテンツ内に表示するリンクのURL', 'password-protected-content' ) }
+						type="url"
+						placeholder="https://example.com"
+					/>
+					<TextControl
+						label={ __( 'ボタンテキスト', 'password-protected-content' ) }
+						value={ linkText }
+						onChange={ ( value ) => setAttributes( { linkText: value } ) }
+						help={ __( 'リンクボタンに表示するテキスト', 'password-protected-content' ) }
+					/>
+					<ToggleControl
+						label={ __( '新しいタブで開く', 'password-protected-content' ) }
+						checked={ linkTarget === '_blank' }
+						onChange={ ( value ) => setAttributes( { linkTarget: value ? '_blank' : '_self' } ) }
+					/>
+				</PanelBody>
 			</InspectorControls>
 
 			<div { ...blockProps }>
@@ -106,6 +128,18 @@ export default function Edit( { attributes, setAttributes } ) {
 						multiline="p"
 					/>
 				</div>
+
+				{ linkUrl && (
+					<div className="password-protected-content-editor__link-preview">
+						<strong>{ __( 'リンクプレビュー:', 'password-protected-content' ) }</strong>
+						<div className="link-button-preview">
+							<span className="dashicon dashicons dashicons-admin-links"></span>
+							{ linkText || __( '詳細を見る', 'password-protected-content' ) }
+							{ linkTarget === '_blank' && <span className="dashicon dashicons dashicons-external"></span> }
+						</div>
+						<small>URL: { linkUrl }</small>
+					</div>
+				) }
 
 				{ password && (
 					<div className="password-protected-content-editor__info">

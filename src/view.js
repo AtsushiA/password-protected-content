@@ -51,6 +51,9 @@ function initPasswordProtection() {
 		const errorDiv = block.querySelector('.password-protected-content__error');
 		const contentBase64 = block.dataset.content;
 		const passwordHash = block.dataset.passwordHash;
+		const linkUrl = block.dataset.linkUrl;
+		const linkText = block.dataset.linkText;
+		const linkTarget = block.dataset.linkTarget;
 		
 		if (!form || !contentBase64 || !passwordHash) {
 			console.warn('Password protected block missing required data:', block);
@@ -89,7 +92,30 @@ function initPasswordProtection() {
 					throw new Error('Empty content');
 				}
 				
-				block.innerHTML = '<div class="password-protected-content__unlocked"><div class="password-protected-content__content">' + content + '</div></div>';
+				// Build unlocked content HTML
+				let unlockedHTML = '<div class="password-protected-content__unlocked">';
+				unlockedHTML += '<div class="password-protected-content__content">' + content + '</div>';
+				
+				// Add link button if URL is provided
+				if (linkUrl && linkUrl.trim() !== '') {
+					const safeUrl = linkUrl.replace(/"/g, '&quot;');
+					const safeTarget = linkTarget || '_self';
+					const safeText = linkText || '詳細を見る';
+					const rel = safeTarget === '_blank' ? ' rel="noopener noreferrer"' : '';
+					const externalIcon = safeTarget === '_blank' ? '<span class="dashicon dashicons dashicons-external"></span>' : '';
+					
+					unlockedHTML += '<div class="password-protected-content__link">';
+					unlockedHTML += '<a href="' + safeUrl + '" class="password-protected-content__link-button" target="' + safeTarget + '"' + rel + '>';
+					unlockedHTML += '<span class="dashicon dashicons dashicons-admin-links"></span>';
+					unlockedHTML += safeText;
+					unlockedHTML += externalIcon;
+					unlockedHTML += '</a>';
+					unlockedHTML += '</div>';
+				}
+				
+				unlockedHTML += '</div>';
+				
+				block.innerHTML = unlockedHTML;
 				block.classList.add('is-unlocked');
 				
 			} catch (error) {

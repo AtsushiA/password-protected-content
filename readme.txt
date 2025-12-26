@@ -4,7 +4,7 @@
 Contributors:      WordPress Telex
 Tags:              block, password, protection, security, private
 Tested up to:      6.8
-Stable tag:        0.1.1
+Stable tag:        0.1.2
 License:           GPLv2 or later
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -21,9 +21,11 @@ Password Protected Content is a powerful WordPress block that allows you to hide
 * Content is encrypted in the HTML source code
 * Secure password-based decryption
 * Clean, user-friendly interface
+* Optional link button within protected content
+* Customizable button text and target (new tab/same tab)
+* Beautiful gradient-styled link buttons
 * Enhanced UTF-8 encoding support for multilingual content
 * Robust error handling and validation
-* Improved initialization for better compatibility
 
 Perfect for membership sites, private content, exclusive materials, or any content you want to restrict access to without complex authentication systems.
 
@@ -35,6 +37,7 @@ Perfect for membership sites, private content, exclusive materials, or any conte
 4. Set your password in the block settings
 5. Add your content inside the block
 6. Customize the locked message if desired
+7. (Optional) Add a link button in the Link Settings panel
 
 == Frequently Asked Questions ==
 
@@ -54,6 +57,14 @@ Yes, you can change the password at any time from the block settings. The conten
 
 Users will need to contact you to get the password. There is no password recovery mechanism built-in for security reasons.
 
+= How do I add a link button to the protected content? =
+
+In the block settings sidebar, open the "Link Settings" panel. Enter your URL, customize the button text (default is "詳細を見る"), and choose whether to open the link in a new tab. The link button will appear below the protected content after the user enters the correct password.
+
+= Can I customize the link button appearance? =
+
+The link button uses a beautiful gradient design by default. You can further customize it using custom CSS by targeting the `.password-protected-content__link-button` class.
+
 == Screenshots ==
 
 1. The block in the editor showing password settings
@@ -61,6 +72,16 @@ Users will need to contact you to get the password. There is no password recover
 3. The unlocked content after password entry
 
 == Changelog ==
+
+= 0.1.2 =
+* New Feature: Added link button functionality to protected content
+* New: Link settings panel with URL, button text, and target options
+* New: Beautiful gradient-styled link buttons with icon support
+* New: Link preview in the editor
+* Enhanced: Link buttons support opening in new tab with proper security attributes (rel="noopener noreferrer")
+* Enhanced: External link indicator icon for links opening in new tabs
+* Improved: Content margin spacing for better visual hierarchy
+* Improved: Editor interface with link preview functionality
 
 = 0.1.1 =
 * Enhanced: Improved UTF-8 encoding handling with mb_convert_encoding for better multilingual support
