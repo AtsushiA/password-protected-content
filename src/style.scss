@@ -1,0 +1,118 @@
+
+/**
+ * The following styles get applied both on the front of your site
+ * and in the editor.
+ */
+
+.wp-block-telex-password-protected-content {
+	margin: 2rem 0;
+	padding: 2rem;
+	background: #f7f7f7;
+	border: 2px solid #e0e0e0;
+	border-radius: 8px;
+
+	&.is-unlocked {
+		background: #fff;
+		border-color: #4caf50;
+	}
+}
+
+.password-protected-content__locked {
+	text-align: center;
+	
+	.password-protected-content__icon {
+		font-size: 48px;
+		color: #666;
+		margin-bottom: 1rem;
+	}
+
+	.password-protected-content__message {
+		margin-bottom: 1.5rem;
+		font-size: 1.1rem;
+		color: #333;
+	}
+
+	.password-protected-content__form {
+		max-width: 400px;
+		margin: 0 auto;
+		display: flex;
+		gap: 0.5rem;
+		flex-direction: column;
+
+		@media (min-width: 600px) {
+			flex-direction: row;
+		}
+	}
+
+	.password-protected-content__input {
+		flex: 1;
+		padding: 0.75rem 1rem;
+		border: 2px solid #ddd;
+		border-radius: 4px;
+		font-size: 1rem;
+		transition: border-color 0.3s ease;
+
+		&:focus {
+			outline: none;
+			border-color: #2196f3;
+		}
+	}
+
+	.password-protected-content__button {
+		padding: 0.75rem 2rem;
+		background: #2196f3;
+		color: white;
+		border: none;
+		border-radius: 4px;
+		font-size: 1rem;
+		cursor: pointer;
+		transition: background 0.3s ease;
+		white-space: nowrap;
+
+		&:hover {
+			background: #1976d2;
+		}
+
+		&:active {
+			transform: scale(0.98);
+		}
+	}
+
+	.password-protected-content__error {
+		margin-top: 1rem;
+		padding: 0.75rem;
+		background: #ffebee;
+		color: #c62828;
+		border-radius: 4px;
+		font-size: 0.9rem;
+	}
+}
+
+.password-protected-content__unlocked {
+	animation: fadeIn 0.5s ease;
+	
+	.password-protected-content__content {
+		line-height: 1.6;
+		
+		p {
+			margin-bottom: 1rem;
+		}
+
+		img {
+			max-width: 100%;
+			height: auto;
+		}
+	}
+}
+
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+	

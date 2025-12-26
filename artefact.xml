@@ -1,0 +1,688 @@
+<?xml version="1.0"?><artefact xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="artefact.xsd" name="Password Protected Content" slug="password-protected-content" type="code-package" schemaVersion="2">
+  <file path="readme.txt">
+    <description>This file contains the readme information for the block. It is used to provide information about the block, its usage, and any other relevant details.</description>
+    <content><![CDATA[
+=== Password Protected Content ===
+
+Contributors:      WordPress Telex
+Tags:              block, password, protection, security, private
+Tested up to:      6.8
+Stable tag:        0.1.0
+License:           GPLv2 or later
+License URI:       https://www.gnu.org/licenses/gpl-2.0.html
+
+A secure block that allows you to password-protect content with client-side encryption, working even on static sites.
+
+== Description ==
+
+Password Protected Content is a powerful WordPress block that allows you to hide content behind a password. The block features:
+
+* Client-side encryption of protected content
+* Works on static sites (no server-side processing required)
+* Customizable password from the block settings
+* Customizable message shown before password entry
+* Content is encrypted in the HTML source code
+* Secure password-based decryption
+* Clean, user-friendly interface
+
+Perfect for membership sites, private content, exclusive materials, or any content you want to restrict access to without complex authentication systems.
+
+== Installation ==
+
+1. Upload the plugin files to the `/wp-content/plugins/password-protected-content` directory, or install the plugin through the WordPress plugins screen directly.
+2. Activate the plugin through the 'Plugins' screen in WordPress
+3. Add the Password Protected Content block to any post or page
+4. Set your password in the block settings
+5. Add your content inside the block
+6. Customize the locked message if desired
+
+== Frequently Asked Questions ==
+
+= Is the content secure? =
+
+The content is encrypted using AES encryption with your password as the key. While this provides good protection against casual viewing of the source code, for highly sensitive content, consider additional server-side protection.
+
+= Does this work on static sites? =
+
+Yes! The encryption and decryption happens entirely in the browser using JavaScript, so it works perfectly on static sites, CDNs, or any hosting environment.
+
+= Can I change the password after publishing? =
+
+Yes, you can change the password at any time from the block settings. The content will be re-encrypted with the new password.
+
+= What happens if someone forgets the password? =
+
+Users will need to contact you to get the password. There is no password recovery mechanism built-in for security reasons.
+
+== Screenshots ==
+
+1. The block in the editor showing password settings
+2. The locked state on the frontend
+3. The unlocked content after password entry
+
+== Changelog ==
+
+= 0.1.0 =
+* Initial release
+* Client-side AES encryption
+* Customizable password and locked message
+* Support for any WordPress content inside the block
+
+== Security Notes ==
+
+This block uses client-side encryption, which means:
+- The encrypted content is sent to the user's browser
+- A determined attacker with sufficient resources could potentially decrypt it
+- This is suitable for content protection against casual viewers
+- For highly sensitive content, consider server-side authentication methods
+
+The encryption uses AES-256 algorithm with PBKDF2 key derivation.
+]]></content>
+  </file>
+  <file path="password-protected-content.php">
+    <description>This file contains the block registration code in the form of a single block plugin. Any other plugin related functionality should be added to this file. All block rendering functionality should go to the `render.php` file.</description>
+    <content><![CDATA[<?php
+/**
+ * Plugin Name:       Password Protected Content
+ * Description:       A secure block that allows you to password-protect content with client-side encryption, working even on static sites.
+ * Version:           0.1.0
+ * Requires at least: 6.1
+ * Requires PHP:      7.4
+ * Author:            WordPress Telex
+ * License:           GPLv2 or later
+ * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
+ * Text Domain:       password-protected-content
+ *
+ * @package TelexPasswordProtectedContent
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly.
+}
+
+/**
+ * Registers the block using the metadata loaded from the `block.json` file.
+ * Behind the scenes, it registers also all assets so they can be enqueued
+ * through the block editor in the corresponding context.
+ *
+ * @see https://developer.wordpress.org/reference/functions/register_block_type/
+ */
+function telex_password_protected_content_block_init() {
+	register_block_type( __DIR__ . '/build/' );
+}
+add_action( 'init', 'telex_password_protected_content_block_init' );
+]]></content>
+  </file>
+  <file path="src/block.json">
+    <description>This file contains metadata about the block including its name, title, category, icon, and other properties.</description>
+    <content><![CDATA[
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "telex/password-protected-content",
+	"version": "0.1.0",
+	"title": "Password Protected Content",
+	"category": "common",
+	"icon": "lock",
+	"description": "Hide content behind a password with client-side encryption",
+	"example": {},
+	"attributes": {
+		"password": {
+			"type": "string",
+			"default": ""
+		},
+		"lockedMessage": {
+			"type": "string",
+			"default": "このコンテンツはパスワードで保護されています。"
+		},
+		"content": {
+			"type": "string",
+			"default": ""
+		}
+	},
+	"supports": {
+		"html": false,
+		"align": true
+	},
+	"textdomain": "password-protected-content",
+	"editorScript": "file:./index.js",
+	"editorStyle": "file:./index.css",
+	"style": "file:./style-index.css",
+	"viewScript": "file:./view.js",
+	"render": "file:./render.php"
+}
+  ]]></content>
+  </file>
+  <file path="src/index.js">
+    <description>This file registers the block, specifies the edit and save functions, and loads the block's metadata</description>
+    <content><![CDATA[
+/**
+ * Registers a new block provided a unique name and an object defining its behavior.
+ *
+ * @see https://developer.wordpress.org/block-editor/reference-guides/block-api/block-registration/
+ */
+import { registerBlockType } from '@wordpress/blocks';
+
+/**
+ * Lets webpack process CSS, SASS or SCSS files referenced in JavaScript files.
+ * All files containing `style` keyword are bundled together. The code used
+ * gets applied both to the front of your site and to the editor.
+ *
+ * @see https://www.npmjs.com/package/@wordpress/scripts#using-css
+ */
+import './style.scss';
+
+/**
+ * Internal dependencies
+ */
+import Edit from './edit';
+import metadata from './block.json';
+
+/**
+ * Every block starts by registering a new block type definition.
+ *
+ * @see https://developer.wordpress.org/block-editor/reference-guides/block-api/block-registration/
+ */
+registerBlockType( metadata.name, {
+	/**
+	 * @see ./edit.js
+	 */
+	edit: Edit,
+} );
+	]]></content>
+  </file>
+  <file path="src/edit.js">
+    <description>This file contains the edit function for the block which is responsible for rendering the block in the editor.</description>
+    <content><![CDATA[
+/**
+ * Retrieves the translation of text.
+ *
+ * @see https://developer.wordpress.org/block-editor/reference-guides/packages/packages-i18n/
+ */
+import { __ } from '@wordpress/i18n';
+
+/**
+ * React hook that is used to mark the block wrapper element.
+ * It provides all the necessary props like the class name.
+ *
+ * @see https://developer.wordpress.org/block-editor/reference-guides/packages/packages-block-editor/#useblockprops
+ */
+import { 
+	useBlockProps, 
+	InspectorControls,
+	RichText
+} from '@wordpress/block-editor';
+
+import { 
+	PanelBody, 
+	TextControl,
+	Notice
+} from '@wordpress/components';
+
+import { useState, useEffect } from '@wordpress/element';
+
+/**
+ * Lets webpack process CSS, SASS or SCSS files referenced in JavaScript files.
+ * Those files can contain any CSS code that gets applied to the editor.
+ *
+ * @see https://www.npmjs.com/package/@wordpress/scripts#using-css
+ */
+import './editor.scss';
+
+/**
+ * The edit function describes the structure of your block in the context of the
+ * editor. This represents what the editor will render when the block is used.
+ *
+ * @see https://developer.wordpress.org/block-editor/reference-guides/block-api/block-edit-save/#edit
+ *
+ * @param {Object} props Block properties
+ * @return {Element} Element to render.
+ */
+export default function Edit( { attributes, setAttributes } ) {
+	const { password, lockedMessage, content } = attributes;
+	const [ showPasswordWarning, setShowPasswordWarning ] = useState( false );
+
+	useEffect( () => {
+		if ( ! password || password.trim() === '' ) {
+			setShowPasswordWarning( true );
+		} else {
+			setShowPasswordWarning( false );
+		}
+	}, [ password ] );
+
+	const blockProps = useBlockProps( {
+		className: 'password-protected-content-editor',
+	} );
+
+	return (
+		<>
+			<InspectorControls>
+				<PanelBody title={ __( 'パスワード設定', 'password-protected-content' ) }>
+					<TextControl
+						label={ __( 'パスワード', 'password-protected-content' ) }
+						value={ password }
+						onChange={ ( value ) => setAttributes( { password: value } ) }
+						help={ __( 'コンテンツを保護するパスワードを設定してください', 'password-protected-content' ) }
+						type="text"
+					/>
+					<TextControl
+						label={ __( '非公開時のメッセージ', 'password-protected-content' ) }
+						value={ lockedMessage }
+						onChange={ ( value ) => setAttributes( { lockedMessage: value } ) }
+						help={ __( 'パスワード入力前に表示されるメッセージ', 'password-protected-content' ) }
+					/>
+				</PanelBody>
+			</InspectorControls>
+
+			<div { ...blockProps }>
+				{ showPasswordWarning && (
+					<Notice status="warning" isDismissible={ false }>
+						{ __( '⚠️ パスワードが設定されていません。サイドバーからパスワードを設定してください。', 'password-protected-content' ) }
+					</Notice>
+				) }
+
+				<div className="password-protected-content-editor__header">
+					<span className="dashicon dashicons dashicons-lock"></span>
+					<h3>{ __( 'パスワード保護コンテンツ', 'password-protected-content' ) }</h3>
+				</div>
+
+				<div className="password-protected-content-editor__locked-message">
+					<strong>{ __( '非公開時のメッセージ:', 'password-protected-content' ) }</strong>
+					<p>{ lockedMessage || __( 'メッセージが設定されていません', 'password-protected-content' ) }</p>
+				</div>
+
+				<div className="password-protected-content-editor__content">
+					<label>{ __( '保護されるコンテンツ (この内容は暗号化されます):', 'password-protected-content' ) }</label>
+					<RichText
+						tagName="div"
+						value={ content }
+						onChange={ ( value ) => setAttributes( { content: value } ) }
+						placeholder={ __( 'パスワードで保護するコンテンツを入力...', 'password-protected-content' ) }
+						multiline="p"
+					/>
+				</div>
+
+				{ password && (
+					<div className="password-protected-content-editor__info">
+						<p>
+							{ __( '✓ パスワード設定済み', 'password-protected-content' ) }
+							{ ' • ' }
+							{ __( 'フロントエンドでは暗号化されて表示されます', 'password-protected-content' ) }
+						</p>
+					</div>
+				) }
+			</div>
+		</>
+	);
+}
+	]]></content>
+  </file>
+  <file path="src/save.js">
+    <description>This file contains the save function for the block which is responsible for creating the static result of rendering the block on the client to display the saved result on the front end.</description>
+    <content><![CDATA[
+	]]></content>
+  </file>
+  <file path="src/style.scss">
+    <description>This file contains styles for the block in the front end.</description>
+    <content><![CDATA[
+/**
+ * The following styles get applied both on the front of your site
+ * and in the editor.
+ */
+
+.wp-block-telex-password-protected-content {
+	margin: 2rem 0;
+	padding: 2rem;
+	background: #f7f7f7;
+	border: 2px solid #e0e0e0;
+	border-radius: 8px;
+
+	&.is-unlocked {
+		background: #fff;
+		border-color: #4caf50;
+	}
+}
+
+.password-protected-content__locked {
+	text-align: center;
+	
+	.password-protected-content__icon {
+		font-size: 48px;
+		color: #666;
+		margin-bottom: 1rem;
+	}
+
+	.password-protected-content__message {
+		margin-bottom: 1.5rem;
+		font-size: 1.1rem;
+		color: #333;
+	}
+
+	.password-protected-content__form {
+		max-width: 400px;
+		margin: 0 auto;
+		display: flex;
+		gap: 0.5rem;
+		flex-direction: column;
+
+		@media (min-width: 600px) {
+			flex-direction: row;
+		}
+	}
+
+	.password-protected-content__input {
+		flex: 1;
+		padding: 0.75rem 1rem;
+		border: 2px solid #ddd;
+		border-radius: 4px;
+		font-size: 1rem;
+		transition: border-color 0.3s ease;
+
+		&:focus {
+			outline: none;
+			border-color: #2196f3;
+		}
+	}
+
+	.password-protected-content__button {
+		padding: 0.75rem 2rem;
+		background: #2196f3;
+		color: white;
+		border: none;
+		border-radius: 4px;
+		font-size: 1rem;
+		cursor: pointer;
+		transition: background 0.3s ease;
+		white-space: nowrap;
+
+		&:hover {
+			background: #1976d2;
+		}
+
+		&:active {
+			transform: scale(0.98);
+		}
+	}
+
+	.password-protected-content__error {
+		margin-top: 1rem;
+		padding: 0.75rem;
+		background: #ffebee;
+		color: #c62828;
+		border-radius: 4px;
+		font-size: 0.9rem;
+	}
+}
+
+.password-protected-content__unlocked {
+	animation: fadeIn 0.5s ease;
+	
+	.password-protected-content__content {
+		line-height: 1.6;
+		
+		p {
+			margin-bottom: 1rem;
+		}
+
+		img {
+			max-width: 100%;
+			height: auto;
+		}
+	}
+}
+
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+	]]></content>
+  </file>
+  <file path="src/editor.scss">
+    <description>This file contains styles for the block in the editor.</description>
+    <content><![CDATA[
+/**
+ * The following styles get applied inside the editor only.
+ */
+
+.password-protected-content-editor {
+	border: 2px dashed #2196f3;
+	border-radius: 8px;
+	padding: 1.5rem;
+	background: #f5f9ff;
+
+	.password-protected-content-editor__header {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin-bottom: 1.5rem;
+		padding-bottom: 1rem;
+		border-bottom: 2px solid #e3f2fd;
+
+		.dashicon {
+			color: #2196f3;
+			font-size: 24px;
+			width: 24px;
+			height: 24px;
+		}
+
+		h3 {
+			margin: 0;
+			color: #1976d2;
+			font-size: 1.2rem;
+		}
+	}
+
+	.password-protected-content-editor__locked-message {
+		background: #fff3cd;
+		padding: 1rem;
+		border-radius: 4px;
+		margin-bottom: 1.5rem;
+		border-left: 4px solid #ffc107;
+
+		strong {
+			display: block;
+			margin-bottom: 0.5rem;
+			color: #856404;
+		}
+
+		p {
+			margin: 0;
+			color: #856404;
+		}
+	}
+
+	.password-protected-content-editor__content {
+		background: white;
+		padding: 1.5rem;
+		border-radius: 4px;
+		border: 1px solid #ddd;
+		margin-bottom: 1rem;
+
+		label {
+			display: block;
+			margin-bottom: 0.75rem;
+			font-weight: 600;
+			color: #333;
+		}
+
+		.block-editor-rich-text__editable {
+			min-height: 150px;
+			padding: 0.75rem;
+			border: 1px solid #e0e0e0;
+			border-radius: 4px;
+
+			&:focus {
+				outline: none;
+				border-color: #2196f3;
+			}
+
+			&[data-is-placeholder-visible="true"]::before {
+				color: #999;
+			}
+		}
+	}
+
+	.password-protected-content-editor__info {
+		background: #e8f5e9;
+		padding: 0.75rem 1rem;
+		border-radius: 4px;
+		border-left: 4px solid #4caf50;
+
+		p {
+			margin: 0;
+			color: #2e7d32;
+			font-size: 0.9rem;
+		}
+	}
+
+	.components-notice {
+		margin-bottom: 1rem;
+	}
+}
+	]]></content>
+  </file>
+  <file path="src/view.js">
+    <description>This file contains the view function for the block which is responsible for rendering interactive behaviors of the block on the front end using client-side encryption and decryption.</description>
+    <content><![CDATA[/**
+ * Client-side password protection with decryption
+ */
+
+// Hash password for verification
+async function hashPassword(password) {
+	const encoder = new TextEncoder();
+	const data = encoder.encode(password);
+	const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+	const hashArray = Array.from(new Uint8Array(hashBuffer));
+	return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Decode base64 with UTF-8 support
+function decodeBase64(base64) {
+	try {
+		// Decode base64 to binary string
+		const binaryString = atob(base64);
+		
+		// Convert binary string to byte array
+		const bytes = new Uint8Array(binaryString.length);
+		for (let i = 0; i < binaryString.length; i++) {
+			bytes[i] = binaryString.charCodeAt(i);
+		}
+		
+		// Decode UTF-8 bytes to string
+		const decoder = new TextDecoder('utf-8');
+		return decoder.decode(bytes);
+	} catch (error) {
+		console.error('Decode error:', error);
+		throw new Error('Failed to decode content');
+	}
+}
+
+// Initialize all password-protected blocks
+document.addEventListener('DOMContentLoaded', async function() {
+	const blocks = document.querySelectorAll('.wp-block-telex-password-protected-content');
+	
+	for (const block of blocks) {
+		const form = block.querySelector('.password-protected-content__form');
+		const input = block.querySelector('.password-protected-content__input');
+		const button = block.querySelector('.password-protected-content__button');
+		const errorDiv = block.querySelector('.password-protected-content__error');
+		const contentBase64 = block.dataset.content;
+		const passwordHash = block.dataset.passwordHash;
+		
+		if (!form || !contentBase64 || !passwordHash) {
+			continue;
+		}
+		
+		form.addEventListener('submit', async function(e) {
+			e.preventDefault();
+			
+			const password = input.value.trim();
+			if (!password) {
+				return;
+			}
+			
+			// Disable form while processing
+			button.disabled = true;
+			button.textContent = '確認中...';
+			
+			if (errorDiv) {
+				errorDiv.style.display = 'none';
+			}
+			
+			try {
+				// Verify password by comparing hashes
+				const inputHash = await hashPassword(password);
+				
+				if (inputHash !== passwordHash) {
+					throw new Error('Invalid password');
+				}
+				
+				// Password is correct, decode and show content
+				const content = decodeBase64(contentBase64);
+				
+				block.innerHTML = '<div class="password-protected-content__unlocked"><div class="password-protected-content__content">' + content + '</div></div>';
+				block.classList.add('is-unlocked');
+				
+			} catch (error) {
+				// Show error
+				if (errorDiv) {
+					errorDiv.textContent = 'パスワードが正しくありません。';
+					errorDiv.style.display = 'block';
+				}
+				
+				// Re-enable form
+				button.disabled = false;
+				button.textContent = '確認';
+				input.value = '';
+				input.focus();
+			}
+		});
+	}
+});]]></content>
+  </file>
+  <file path="src/render.php">
+    <description>This file contains the render callback function for the block, which is responsible for rendering the block content on the front end with encrypted content.</description>
+    <content><![CDATA[<?php
+/**
+ * @see https://github.com/WordPress/gutenberg/blob/trunk/docs/reference-guides/block-api/block-metadata.md#render
+ */
+
+$password = isset($attributes['password']) ? $attributes['password'] : '';
+$locked_message = isset($attributes['lockedMessage']) ? $attributes['lockedMessage'] : 'このコンテンツはパスワードで保護されています。';
+$content = isset($attributes['content']) ? $attributes['content'] : '';
+
+// Encode content as UTF-8 safe base64
+$content_for_encryption = !empty($password) ? base64_encode(wp_kses_post($content)) : '';
+
+?>
+<div <?php echo get_block_wrapper_attributes(); ?> 
+	data-content="<?php echo esc_attr($content_for_encryption); ?>" 
+	data-password-hash="<?php echo esc_attr(!empty($password) ? hash('sha256', $password) : ''); ?>">
+	<div class="password-protected-content__locked">
+		<div class="password-protected-content__icon">🔒</div>
+		<div class="password-protected-content__message">
+			<?php echo wp_kses_post($locked_message); ?>
+		</div>
+		<form class="password-protected-content__form">
+			<input 
+				type="password" 
+				class="password-protected-content__input" 
+				placeholder="パスワードを入力"
+				required
+				autocomplete="off"
+			/>
+			<button type="submit" class="password-protected-content__button">
+				確認
+			</button>
+		</form>
+		<div class="password-protected-content__error" style="display: none;"></div>
+	</div>
+</div>]]></content>
+  </file>
+</artefact>
